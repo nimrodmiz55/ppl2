@@ -1,13 +1,35 @@
 // ========================================================
 // Value type definition for L4
 
-import { isPrimOp, CExp, PrimOp, VarDecl } from './L3-ast';
+import { isPrimOp, CExp, PrimOp, VarDecl, Binding } from './L3-ast';
 import { Env, makeEmptyEnv } from './L3-env-env';
 import { append } from 'ramda';
 import { isArray, isNumber, isString } from '../shared/type-predicates';
 
 
-export type Value = SExpValue;
+export type Value = SExpValue | ClassValue | ObjectValue;
+
+// ========================================================
+// Class and Object values for L31
+export type ClassValue = {
+    tag: "Class";
+    fields: VarDecl[];
+    methods: Binding[];
+    env: Env;
+}
+export const makeClassValue = (fields: VarDecl[], methods: Binding[]): ClassValue =>
+    ({tag: "Class", fields, methods, env: makeEmptyEnv()});
+export const makeClassValueEnv = (fields: VarDecl[], methods: Binding[], env: Env): ClassValue =>
+    ({tag: "Class", fields, methods, env});
+export const isClassValue = (x: any): x is ClassValue => x.tag === "Class";
+
+export type ObjectValue = {
+    tag: "Object";
+    methods: [string, Value][];
+}
+export const makeObjectValue = (methods: [string, Value][]): ObjectValue =>
+    ({tag: "Object", methods});
+export const isObjectValue = (x: any): x is ObjectValue => x.tag === "Object";
 
 export type Functional = PrimOp | Closure;
 export const isFunctional = (x: any): x is Functional => isPrimOp(x) || isClosure(x);
@@ -42,10 +64,11 @@ export type SymbolSExp = {
     val: string;
 }
 
-export type SExpValue = number | boolean | string | PrimOp | Closure | SymbolSExp | EmptySExp | CompoundSExp;
+export type SExpValue = number | boolean | string | PrimOp | Closure | SymbolSExp | EmptySExp | CompoundSExp | ClassValue | ObjectValue;
 export const isSExp = (x: any): x is SExpValue =>
     typeof(x) === 'string' || typeof(x) === 'boolean' || typeof(x) === 'number' ||
-    isSymbolSExp(x) || isCompoundSExp(x) || isEmptySExp(x) || isPrimOp(x) || isClosure(x);
+    isSymbolSExp(x) || isCompoundSExp(x) || isEmptySExp(x) || isPrimOp(x) || isClosure(x) ||
+    isClassValue(x) || isObjectValue(x);
 
 export const makeCompoundSExp = (val1: SExpValue, val2: SExpValue): CompoundSExp =>
     ({tag: "CompoundSexp", val1: val1, val2 : val2});
@@ -86,4 +109,6 @@ export const valueToString = (val: Value): string =>
     isSymbolSExp(val) ? val.val :
     isEmptySExp(val) ? "'()" :
     isCompoundSExp(val) ? compoundSExpToString(val) :
+    isClassValue(val) ? "Class" :
+    isObjectValue(val) ? "Object" :
     val;
