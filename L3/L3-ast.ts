@@ -266,8 +266,8 @@ const parseClassExp = (fields: Sexp, rest: Sexp[]): Result<ClassExp> => {
     if (!isGoodBindings(methodsList))
         return makeFailure('Malformed methods in "class" expression');
     const vars = map((b: [string, Sexp]) => b[0], methodsList as [string, Sexp][]); // Extract method names.
-    const valsResult = mapResult(parseL3CExp, map(second, methodsList as [string, Sexp][]));
-    const bindingsResult = mapv(valsResult, (vals: CExp[]) => zipWith(makeBinding, vars, vals));
+    const valsResult = mapResult(parseL3CExp, map(second, methodsList as [string, Sexp][])); // Convert method to CEXP.
+    const bindingsResult = mapv(valsResult, (vals: CExp[]) => zipWith(makeBinding, vars, vals)); // Bind them together.
     return mapv(bindingsResult, (bindings: Binding[]) =>
         makeClassExp(map(makeVarDecl, fields as string[]), bindings));
 }
